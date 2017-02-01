@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/gphat/datadog-scala.png?branch=master)](https://travis-ci.org/gphat/datadog-scala)
+[![Build Status](https://travis-ci.org/adnanyaqoobvirk/datadog-scala.png?branch=master)](https://travis-ci.org/adnanyaqoobvirk/datadog-scala)
 
 # Datadog-Scala
 
