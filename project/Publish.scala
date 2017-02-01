@@ -3,7 +3,7 @@ import sbt.Keys._
 
 object Publish {
   lazy val settings = Seq(
-    homepage := Some(url("http://github.com/gphat/datadog-scala")),
+    homepage := Some(url("http://github.com/adnanyaqoobvirk/datadog-scala")),
     publishMavenStyle := true,
     publishTo := {
         val nexus = "https://oss.sonatype.org/"
@@ -23,8 +23,8 @@ object Publish {
        </license>
       </licenses>
       <scm>
-        <url>git@github.com:gphat/datadog-scala.git</url>
-        <connection>scm:git:git@github.com:gphat/datadog-scala.git</connection>
+        <url>git@github.com:adnanyaqoobvirk/datadog-scala.git</url>
+        <connection>scm:git:git@github.com:adnanyaqoobvirk/datadog-scala.git</connection>
       </scm>
       <developers>
         <developer>
