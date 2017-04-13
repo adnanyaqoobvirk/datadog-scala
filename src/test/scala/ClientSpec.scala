@@ -1,23 +1,22 @@
 package test
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.model.HttpRequest
 import akka.pattern.AskTimeoutException
-import github.gphat.datadog._
-import java.nio.charset.StandardCharsets
-import org.json4s._
-import org.json4s.native.JsonMethods._
+import akka.stream.ActorMaterializer
+import org.yaqoob.datadog.Client
+import org.yaqoob.datadog.common.Response
+import org.json4s.DefaultFormats
 import org.specs2.mutable.Specification
+import org.yaqoob.datadog.{Client, HttpAdapter}
+
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await,Future,Promise}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.util.Try
-import spray.http._
 
 class ClientSpec extends Specification {
 
-  implicit val formats = DefaultFormats
-
-  class FiveHundredHttpAdapter extends HttpAdapter {
+  class FiveHundredHttpAdapter()(implicit system: ActorSystem, materializer: ActorMaterializer, executtionContext: ExecutionContextExecutor) extends HttpAdapter{
 
     override def doHttp(request: HttpRequest): Future[Response] = {
       Future {
@@ -26,21 +25,26 @@ class ClientSpec extends Specification {
     }
   }
 
-  class SlowHttpAdapter extends HttpAdapter {
+  class SlowHttpAdapter()(implicit system: ActorSystem, materializer: ActorMaterializer, executtionContext: ExecutionContextExecutor) extends HttpAdapter {
 
     override def doHttp(request: HttpRequest) = {
       Future.failed(new AskTimeoutException("I timed out!"))
     }
   }
 
+  implicit val formats = DefaultFormats
 
   // Sequential because it's less work to share the client instance
   sequential
 
   "Client with custom HttpAdapter" should {
 
+    implicit val defaultActorSystem = ActorSystem()
+    implicit val defaultMaterializer = ActorMaterializer()
+    implicit val executionContext = defaultActorSystem.dispatcher
+
     "handle user-supplied actor system" in {
-      val adapter = new HttpAdapter(actorSystem = Some(ActorSystem("keen-test")))
+      val adapter = new HttpAdapter()
       val attempt = Try({
         val client = new Client(
           apiKey = "abc",
@@ -53,6 +57,10 @@ class ClientSpec extends Specification {
   }
 
   "Client 500 failures" should {
+
+    implicit val defaultActorSystem = ActorSystem()
+    implicit val defaultMaterializer = ActorMaterializer()
+    implicit val executionContext = defaultActorSystem.dispatcher
 
     val adapter = new FiveHundredHttpAdapter()
     val client = new Client(
@@ -69,6 +77,10 @@ class ClientSpec extends Specification {
   }
 
   "Client future failures" should {
+
+    implicit val defaultActorSystem = ActorSystem()
+    implicit val defaultMaterializer = ActorMaterializer()
+    implicit val executionContext = defaultActorSystem.dispatcher
 
     val adapter = new SlowHttpAdapter()
     val client = new Client(

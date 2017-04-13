@@ -1,17 +1,16 @@
 package test
 
 import akka.actor.ActorSystem
-import akka.pattern.AskTimeoutException
-import github.gphat.datadog._
-import java.nio.charset.StandardCharsets
+import akka.http.scaladsl.model.HttpMethods
+import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.stream.ActorMaterializer
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.specs2.mutable.Specification
+import org.yaqoob.datadog.Client
+
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await,Future,Promise}
-import scala.util.Try
-import spray.http._
+import scala.concurrent.Await
 
 class TagSpec extends Specification {
 
@@ -21,6 +20,10 @@ class TagSpec extends Specification {
   sequential
 
   "Client" should {
+
+    implicit val defaultActorSystem = ActorSystem()
+    implicit val defaultMaterializer = ActorMaterializer()
+    implicit val executionContext = defaultActorSystem.dispatcher
 
     val adapter = new OkHttpAdapter()
     val client = new Client(
@@ -42,11 +45,13 @@ class TagSpec extends Specification {
 
       res.statusCode must beEqualTo(200)
       adapter.getRequest must beSome.which(_.uri.toString == "https://app.datadoghq.com/api/v1/tags/hosts/12345?api_key=apiKey&application_key=appKey")
-      adapter.getRequest must beSome.which(_.method == HttpMethods.POST)
 
-      val body = parse(adapter.getRequest.get.entity.asString)
+      val entity = Await.result(Unmarshal(adapter.getRequest.get.entity).to[String], Duration(1, "second"))
+      val body = parse(entity)
       (body \ "tags")(0).extract[String] must beEqualTo("foo:bar")
       (body \ "tags")(1).extract[String] must beEqualTo("butt")
+
+      adapter.getRequest must beSome.which(_.method == HttpMethods.POST)
     }
 
     "handle get tags for host" in {

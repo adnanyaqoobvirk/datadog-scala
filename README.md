@@ -2,17 +2,25 @@
 
 # Datadog-Scala
 
-A Scala library for interacting with the Datadog API.
+A Scala library for interacting with the Datadog API using akka-http.
 
 As of October 2014 this library covers all the methods in the [Datadog API Documentation](http://docs.datadoghq.com/api/).
 
 # Example
 
 ```scala
-import github.gphat.datadog.Client
-import scala.concurrent.ExecutionContext.Implicits.global
+import org.yaqoob.datadog.Client
+import org.yaqoob.datadog.HttpAdapter
 
-val client = new Client(apiKey = "XXX", appKey = "XXX")
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
+
+implicit val defaultActorSystem = ActorSystem()
+implicit val defaultMaterializer = ActorMaterializer()
+implicit val executionContext = defaultActorSystem.dispatcher
+    
+val adapter = new HttpAdapter()
+val client = new Client(apiKey = "XXX", appKey = "XXX", httpAdapter = adapter)
 client.getAllTimeboards.foreach({ response =>
     println(response.body)
 })
@@ -23,6 +31,6 @@ client.getAllTimeboards.foreach({ response =>
 This library is available on Maven Central.
 
 ```
-// Add the Dep, 2.10 and 2.11 artifacts are published!
-libraryDependencies += "com.github.gphat" %% "datadog-scala" % "1.1.3"
+// Add the Dep, 2.11 artifacts are published!
+libraryDependencies += "org.yaqoob" %% "datadog-scala" % "1.2.2"
 ```

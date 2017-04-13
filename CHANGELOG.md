@@ -1,3 +1,6 @@
+# 1.3.0
+- Shifted the backend to akka-http
+
 # 1.2.0
 - Fixed error in README re: dependency, thanks [danbills](https://github.com/danbills)
 - Upgrade to json4s 3.5.0, this may cause some compat woes hence the version bum, thanks [dsiegmann-ssc](https://github.com/dsiegmann-ssc)

@@ -1,17 +1,15 @@
 package test
 
 import akka.actor.ActorSystem
-import akka.pattern.AskTimeoutException
-import github.gphat.datadog._
-import java.nio.charset.StandardCharsets
+import akka.http.scaladsl.model.HttpMethods
+import akka.stream.ActorMaterializer
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.specs2.mutable.Specification
+import org.yaqoob.datadog.Client
+
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await,Future,Promise}
-import scala.util.Try
-import spray.http._
+import scala.concurrent.Await
 
 class SearchSpec extends Specification {
 
@@ -21,6 +19,10 @@ class SearchSpec extends Specification {
   sequential
 
   "Client" should {
+
+    implicit val defaultActorSystem = ActorSystem()
+    implicit val defaultMaterializer = ActorMaterializer()
+    implicit val executionContext = defaultActorSystem.dispatcher
 
     val adapter = new OkHttpAdapter()
     val client = new Client(

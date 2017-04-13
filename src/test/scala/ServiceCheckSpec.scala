@@ -1,17 +1,15 @@
 package test
 
 import akka.actor.ActorSystem
-import akka.pattern.AskTimeoutException
-import github.gphat.datadog._
-import java.nio.charset.StandardCharsets
+import akka.http.scaladsl.model.HttpMethods
+import akka.stream.ActorMaterializer
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.specs2.mutable.Specification
+import org.yaqoob.datadog.Client
+
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await,Future,Promise}
-import scala.util.Try
-import spray.http._
+import scala.concurrent.Await
 
 class ServiceCheckSpec extends Specification {
 
@@ -21,6 +19,10 @@ class ServiceCheckSpec extends Specification {
   sequential
 
   "Client" should {
+
+    implicit val defaultActorSystem = ActorSystem()
+    implicit val defaultMaterializer = ActorMaterializer()
+    implicit val executionContext = defaultActorSystem.dispatcher
 
     val adapter = new OkHttpAdapter()
     val client = new Client(
@@ -41,7 +43,7 @@ class ServiceCheckSpec extends Specification {
       val uri = adapter.getRequest.get.uri.toString
       uri must contain("https://app.datadoghq.com/api/v1/check_run")
 
-      val params = adapter.getRequest.get.uri.query.toMap
+      val params = adapter.getRequest.get.uri.query().toMap
       params must havePairs(
         "api_key" -> "apiKey",
         "application_key" -> "appKey",

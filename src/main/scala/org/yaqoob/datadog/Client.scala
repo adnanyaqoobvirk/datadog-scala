@@ -1,21 +1,26 @@
-package github.gphat.datadog
+package org.yaqoob.datadog
 
-import grizzled.slf4j.Logging
-import org.json4s._
+import org.yaqoob.datadog.common.{Metric, Response}
 import org.json4s.FieldSerializer._
 import org.json4s.JsonDSL._
+import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
-import org.json4s.jackson.Serialization.{read,write}
-import scala.concurrent.Future
-import java.nio.charset.StandardCharsets
+import org.json4s.jackson.Serialization.write
 
+
+import scala.concurrent.Future
+
+/**
+  * Created by Adnan Yaqoob on 13/04/2017.
+  */
 class Client(
-  scheme: String = "https",
-  authority: String = "app.datadoghq.com",
-  apiKey: String,
-  appKey: String,
-  httpAdapter: HttpAdapter = new HttpAdapter()) extends Logging {
+              scheme: String = "https",
+              authority: String = "app.datadoghq.com",
+              apiKey: String,
+              appKey: String,
+              httpAdapter: HttpAdapter
+            ){
 
   val metricSerializer = FieldSerializer[Metric](
     renameTo("metricType", "metric_type"),
@@ -25,35 +30,35 @@ class Client(
   implicit val formats = Serialization.formats(NoTypeHints) + metricSerializer
 
   def addComment(
-    message: String, handle: Option[String] = None,
-    relatedEventId: Option[Long] = None
-  ): Future[Response] = {
+                  message: String, handle: Option[String] = None,
+                  relatedEventId: Option[Long] = None
+                ): Future[Response] = {
 
     val json =
       ("message" -> message) ~
-      ("handle" -> handle) ~
-      ("related_event_id" -> relatedEventId)
+        ("handle" -> handle) ~
+        ("related_event_id" -> relatedEventId)
 
     val path = Seq("comments").mkString("/")
     doRequest(path = path, method = "POST", body = Some(write(json)))
   }
 
   def addEvent(
-    title: String, text: String, dateHappened: Option[String] = None,
-    priority: Option[String] = None, tags: Option[Seq[String]] = None,
-    alertType: Option[String] = None, aggregationKey: Option[String] = None,
-    sourceTypeName: Option[String] = None
-  ): Future[Response] = {
+                title: String, text: String, dateHappened: Option[String] = None,
+                priority: Option[String] = None, tags: Option[Seq[String]] = None,
+                alertType: Option[String] = None, aggregationKey: Option[String] = None,
+                sourceTypeName: Option[String] = None
+              ): Future[Response] = {
 
     val json =
       ("title" -> title) ~
-      ("text" -> text) ~
-      ("date_happened" -> dateHappened) ~
-      ("priority" -> priority) ~
-      ("tags" -> tags) ~
-      ("alert_type" -> alertType) ~
-      ("aggregation_key" -> aggregationKey) ~
-      ("source_type_name" -> sourceTypeName)
+        ("text" -> text) ~
+        ("date_happened" -> dateHappened) ~
+        ("priority" -> priority) ~
+        ("tags" -> tags) ~
+        ("alert_type" -> alertType) ~
+        ("aggregation_key" -> aggregationKey) ~
+        ("source_type_name" -> sourceTypeName)
 
     val path = Seq("events").mkString("/")
     doRequest(path = path, method = "POST", body = Some(compact(render(json))))
@@ -61,25 +66,24 @@ class Client(
 
   def addMetrics(series: Seq[Metric]): Future[Response] = {
 
-    val json = (
+    val json =
       "series" -> series.map { s =>
         ("metric" -> s.name) ~
-        ("points" -> s.points.map(tuple => Seq(JInt(tuple._1), JDouble(tuple._2)))) ~
-        ("metric_type" -> s.metricType) ~
-        ("tags" -> s.tags) ~
-        ("host" -> s.host)
+          ("points" -> s.points.map(tuple => Seq(JInt(tuple._1), JDouble(tuple._2)))) ~
+          ("metric_type" -> s.metricType) ~
+          ("tags" -> s.tags) ~
+          ("host" -> s.host)
       }
-    )
 
     val path = Seq("series").mkString("/")
     doRequest(path = path, method = "POST", body = Some(write(json)))
   }
 
   def addServiceCheck(
-    check: String, hostName: String, status: Int,
-    timestamp: Option[Int] = None, message: Option[String] = None,
-    tags: Option[Seq[String]] = None
-  ): Future[Response] = {
+                       check: String, hostName: String, status: Int,
+                       timestamp: Option[Int] = None, message: Option[String] = None,
+                       tags: Option[Seq[String]] = None
+                     ): Future[Response] = {
 
     val path = Seq("check_run").mkString("/")
     doRequest(path = path, method = "POST", params = Map(
@@ -101,7 +105,7 @@ class Client(
   // XXX source
   def addTags(hostId: String, tags: Seq[String]): Future[Response] = {
 
-    val json = ("tags" -> tags)
+    val json = "tags" -> tags
 
     val path = Seq("tags", "hosts", hostId).mkString("/")
     doRequest(path = path, method = "POST", body = Some(write(json)))
@@ -196,9 +200,9 @@ class Client(
   }
 
   def getEvents(
-    start: Long, end: Long, priority: Option[String] = None,
-    sources: Option[Seq[String]] = None, tags: Option[Seq[String]] = None
-  ): Future[Response] = {
+                 start: Long, end: Long, priority: Option[String] = None,
+                 sources: Option[Seq[String]] = None, tags: Option[Seq[String]] = None
+               ): Future[Response] = {
 
     val params = Map(
       "start" -> Some(start.toString),
@@ -269,13 +273,13 @@ class Client(
   }
 
   def updateComment(
-    commentId: Long, message: Option[String], handle: Option[String] = None,
-    relatedEventId: Option[Long] = None
-  ): Future[Response] = {
+                     commentId: Long, message: Option[String], handle: Option[String] = None,
+                     relatedEventId: Option[Long] = None
+                   ): Future[Response] = {
 
     val json =
       ("message" -> message) ~
-      ("handle" -> handle)
+        ("handle" -> handle)
 
     val path = Seq("comments", commentId).mkString("/")
     doRequest(path = path, method = "PUT", body = Some(write(json)))
@@ -294,11 +298,11 @@ class Client(
   }
 
   private def doRequest(
-    path: String,
-    method: String,
-    body: Option[String] = None,
-    params: Map[String,Option[String]] = Map.empty,
-    contentType: String = "json") = {
+                         path: String,
+                         method: String,
+                         body: Option[String] = None,
+                         params: Map[String,Option[String]] = Map.empty,
+                         contentType: String = "json") = {
 
     httpAdapter.doRequest(
       method = method, scheme = scheme, authority = authority, path = path,
@@ -306,11 +310,5 @@ class Client(
       contentType = contentType
     )
   }
-
-  /**
-   * Disconnects any remaining connections. Both idle and active.
-   */
-  def shutdown {
-    httpAdapter.shutdown
-  }
 }
+

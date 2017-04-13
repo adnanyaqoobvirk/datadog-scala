@@ -1,17 +1,17 @@
 package test
 
 import akka.actor.ActorSystem
-import akka.pattern.AskTimeoutException
-import github.gphat.datadog._
-import java.nio.charset.StandardCharsets
+import akka.http.scaladsl.model.HttpMethods
+import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.stream.ActorMaterializer
+import org.yaqoob.datadog.common.Metric
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.specs2.mutable.Specification
+import org.yaqoob.datadog.Client
+
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await,Future,Promise}
-import scala.util.Try
-import spray.http._
+import scala.concurrent.Await
 
 class MetricSpec extends Specification {
 
@@ -21,6 +21,10 @@ class MetricSpec extends Specification {
   sequential
 
   "Client" should {
+
+    implicit val defaultActorSystem = ActorSystem()
+    implicit val defaultMaterializer = ActorMaterializer()
+    implicit val executionContext = defaultActorSystem.dispatcher
 
     val adapter = new OkHttpAdapter()
     val client = new Client(
@@ -51,7 +55,8 @@ class MetricSpec extends Specification {
 
       res.statusCode must beEqualTo(200)
       adapter.getRequest must beSome.which(_.uri.toString == "https://app.datadoghq.com/api/v1/series?api_key=apiKey&application_key=appKey")
-      val body = parse(adapter.getRequest.get.entity.asString)
+      val entity = Await.result(Unmarshal(adapter.getRequest.get.entity).to[String], Duration(1, "second"))
+      val body = parse(entity)
       val names = for {
         JObject(series) <- body
         JField("metric", JString(name)) <- series
@@ -70,6 +75,7 @@ class MetricSpec extends Specification {
       points must contain(be_==(Seq(JArray(List(JInt(1412183578), JDouble(12.0))), JArray(List(JInt(1412183579), JDouble(123.0)))))).exactly(1)
       points must contain(be_==(Seq(JArray(List(JInt(1412183580), JDouble(12.0))), JArray(List(JInt(1412183581), JDouble(123.0)))))).exactly(1)
 
+
       adapter.getRequest must beSome.which(_.method == HttpMethods.POST)
     }
 
@@ -81,7 +87,7 @@ class MetricSpec extends Specification {
       ), Duration(5, "second"))
 
       res.statusCode must beEqualTo(200)
-      val params = adapter.getRequest.get.uri.query.toMap
+      val params = adapter.getRequest.get.uri.query().toMap
 
       params must havePairs(
         "api_key" -> "apiKey",
