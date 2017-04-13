@@ -32,5 +32,5 @@ This library is available on Maven Central.
 
 ```
 // Add the Dep, 2.11 artifacts are published!
-libraryDependencies += "org.yaqoob" %% "datadog-scala" % "1.2.2"
+libraryDependencies += "org.yaqoob" %% "datadog-scala" % "1.3.0"
 ```
