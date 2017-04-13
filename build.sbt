@@ -4,6 +4,8 @@ name := "datadog-scala"
 
 scalaVersion := "2.11.8"
 
+crossScalaVersions := Seq("2.11.8")
+
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
 
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
@@ -20,5 +22,7 @@ libraryDependencies ++= Seq(
 )
 
 releasePublishArtifactsAction := PgpKeys.publishSigned.value
+
+releaseCrossBuild := true
 
 Publish.settings
