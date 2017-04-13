@@ -1,4 +1,4 @@
-organization := "com.github.adnanyaqoobvirk"
+organization := "org.yaqoob"
 
 name := "datadog-scala"
 
