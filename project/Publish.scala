@@ -33,6 +33,12 @@ object Publish {
           <organization>Cory Industries Ltd Inc</organization>
           <organizationUrl>https://onemogin.com</organizationUrl>
         </developer>
+        <developer>
+          <name>Adnan Yaqoob</name>
+          <email>adnan@yaqoob.org</email>
+          <organization>Yaqoob.org</organization>
+          <organizationUrl>https://yaqoob.org</organizationUrl>
+        </developer>
       </developers>
     )
   )
